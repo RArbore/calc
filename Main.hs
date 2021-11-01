@@ -12,8 +12,8 @@
 
 import Data.Char
 
-data Operation = Add | Sub | Mul | Div | Exp deriving (Eq, Ord)
-data Token = TokenNumber Integer | TokenOperation | Tokens [Token] deriving (Show)
+data Operation = Add | Sub | Mul | Div | Exp deriving (Eq, Ord, Show)
+data Token = TokenNumber Integer | TokenOperation Operation | Tokens [Token] deriving (Show)
 
 parseNumberToken :: String -> Maybe (String, Token)
 parseNumberToken "" = Nothing
@@ -25,6 +25,16 @@ parseNumberToken x
           | isDigit(x) = cutDigitHead(xs)
           | otherwise = x:xs
 
+parseOperationToken :: String -> Maybe (String, Token)
+parseOperationToken "" = Nothing
+parseOperationToken (x:xs)
+  | x == '+' = Just (xs, TokenOperation Add)
+  | x == '-' = Just (xs, TokenOperation Sub)
+  | x == '*' = Just (xs, TokenOperation Mul)
+  | x == '/' = Just (xs, TokenOperation Div)
+  | x == '^' = Just (xs, TokenOperation Exp)
+  | otherwise = Nothing
+
 main :: IO ()
 main = do
-  print $ parseNumberToken "43 5 "
+  print $ parseOperationToken "+43 5 "

@@ -57,7 +57,7 @@ opCalc a b op
   | op == Div = a / b
   | op == Mul = a * b
   | op == Sub = a - b
-  | op == Add = a + b
+  | otherwise = a + b
 
 calc :: [Token] -> [Token]
 calc x = foldr calcOp x [Add ..]
@@ -71,9 +71,10 @@ calc x = foldr calcOp x [Add ..]
           | otherwise = (TokenNumber a):(TokenOperation o):(calcOp op ((TokenNumber b):xs))
         calcOp _ _ = []
 
+extract :: [Token] -> Maybe Double
+extract [TokenNumber a] = Just a
+extract _ = Nothing
+
 main :: IO ()
 main = do
-  let p = parse "10+3*(3+8)"
-  print p
-  let c = calc p
-  print c
+  print $ extract $ calc $ parse "2*(2*(4))"

@@ -16,26 +16,6 @@ import Data.Char
 data Operation = Add | Sub | Mul | Div | Exp deriving (Show, Enum, Eq, Bounded)
 data Token = TokenNumber Double | TokenOperation Operation | Tokens [Token] deriving (Show)
 
-parseNumberToken :: String -> Maybe (String, Token)
-parseNumberToken "" = Nothing
-parseNumberToken x
-  | digits /= "" = Just (cutDigitHead x, TokenNumber $ read $ digits)
-  | otherwise = Nothing
-  where digits = takeWhile isDigit x
-        cutDigitHead [] = []
-        cutDigitHead (y:ys)
-          | isDigit(y) = cutDigitHead ys
-          | otherwise = y:ys
-
-parseOperationToken :: String -> Maybe (String, Token)
-parseOperationToken "" = Nothing
-parseOperationToken (x:xs)
-  | x == '+' = Just (xs, TokenOperation Add)
-  | x == '-' = Just (xs, TokenOperation Sub)
-  | x == '*' = Just (xs, TokenOperation Mul)
-  | x == '/' = Just (xs, TokenOperation Div)
-  | x == '^' = Just (xs, TokenOperation Exp)
-  | otherwise = Nothing
 
 parse :: String -> [Token]
 parse "" = []
@@ -44,20 +24,29 @@ parse (x:xs)
   | isJust opRet = (snd (fromJust opRet)):(parse (fst (fromJust opRet)))
   | x == '(' = Tokens (parse (takeWhile (\c -> c /= ')') xs)):(parse (cutInParens xs))
   | otherwise = parse xs
-  where numRet = parseNumberToken (x:xs)
-        opRet = parseOperationToken (x:xs)
+  where opRet = parseOperationToken (x:xs)
+          where parseOperationToken "" = Nothing
+                parseOperationToken (y:ys)
+                  | y == '+' = Just (ys, TokenOperation Add)
+                  | y == '-' = Just (ys, TokenOperation Sub)
+                  | y == '*' = Just (ys, TokenOperation Mul)
+                  | y == '/' = Just (ys, TokenOperation Div)
+                  | y == '^' = Just (ys, TokenOperation Exp)
+                  | otherwise = Nothing
+        numRet = parseNumberToken (x:xs)
+          where parseNumberToken "" = Nothing
+                parseNumberToken y
+                  | digits /= "" = Just (cutDigitHead y, TokenNumber $ read $ digits)
+                  | otherwise = Nothing
+                  where digits = takeWhile isDigit y
+                        cutDigitHead [] = []
+                        cutDigitHead (z:zs)
+                          | isDigit(z) = cutDigitHead zs
+                          | otherwise = z:zs
         cutInParens [] = []
         cutInParens (y:ys)
           | y == ')' = ys
           | otherwise = cutInParens ys
-
-opCalc :: Double -> Double -> Operation -> Double
-opCalc a b op
-  | op == Exp = a ** b
-  | op == Div = a / b
-  | op == Mul = a * b
-  | op == Sub = a - b
-  | otherwise = a + b
 
 calc :: [Token] -> [Token]
 calc x = foldr calcOp x [Add ..]
@@ -69,6 +58,12 @@ calc x = foldr calcOp x [Add ..]
         calcOp op ((TokenNumber a):(TokenOperation o):(TokenNumber b):xs)
           | op == o = calcOp op ((TokenNumber (opCalc a b op)):xs)
           | otherwise = (TokenNumber a):(TokenOperation o):(calcOp op ((TokenNumber b):xs))
+            where opCalc oa ob oop
+                    | oop == Exp = oa ** ob
+                    | oop == Div = oa / ob
+                    | oop == Mul = oa * ob
+                    | oop == Sub = oa - ob
+                    | otherwise = oa + ob
         calcOp _ _ = []
 
 extract :: [Token] -> Maybe Double
@@ -77,4 +72,4 @@ extract _ = Nothing
 
 main :: IO ()
 main = do
-  print $ extract $ calc $ parse "2*(2*(4))"
+  print $ extract $ calc $ parse "2*(2*(4 + 1)) / 4 + 7"

@@ -13,8 +13,8 @@
 import Data.Maybe
 import Data.Char
 
-data Operation = Add | Sub | Mul | Div | Exp deriving (Eq, Ord, Show)
-data Token = TokenNumber Integer | TokenOperation Operation | Tokens [Token] deriving (Show)
+data Operation = Add | Sub | Mul | Div | Exp deriving (Show, Enum, Eq, Bounded)
+data Token = TokenNumber Double | TokenOperation Operation | Tokens [Token] deriving (Show)
 
 parseNumberToken :: String -> Maybe (String, Token)
 parseNumberToken "" = Nothing
@@ -51,6 +51,29 @@ parse (x:xs)
           | y == ')' = ys
           | otherwise = cutInParens ys
 
+opCalc :: Double -> Double -> Operation -> Double
+opCalc a b op
+  | op == Exp = a ** b
+  | op == Div = a / b
+  | op == Mul = a * b
+  | op == Sub = a - b
+  | op == Add = a + b
+
+calc :: [Token] -> [Token]
+calc x = foldr calcOp x [Add ..]
+  where calcOp _ [] = []
+        calcOp _ [TokenOperation _] = []
+        calcOp _ [TokenNumber a] = [TokenNumber a]
+        calcOp op ((Tokens a):xs) = calcOp op ((calc a) ++ xs)
+        calcOp op ((TokenNumber a):(TokenOperation o):(Tokens b):xs) = calcOp op ((TokenNumber a):(TokenOperation o):(calc b)) ++ xs
+        calcOp op ((TokenNumber a):(TokenOperation o):(TokenNumber b):xs)
+          | op == o = calcOp op ((TokenNumber (opCalc a b op)):xs)
+          | otherwise = (TokenNumber a):(TokenOperation o):(calcOp op ((TokenNumber b):xs))
+        calcOp _ _ = []
+
 main :: IO ()
 main = do
-  print $ parse "3 / (5 ^ (3 + 7))"
+  let p = parse "10+3*(3+8)"
+  print p
+  let c = calc p
+  print c

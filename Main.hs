@@ -10,6 +10,7 @@
     You should have received a copy of the GNU General Public License
     along with calc. If not, see <https://www.gnu.org/licenses/>.  -}
 
+import System.Environment
 import Data.Maybe
 import Data.Char
 
@@ -72,4 +73,6 @@ extract _ = Nothing
 
 main :: IO ()
 main = do
-  print $ extract $ calc $ parse "2*(2*(4 + 1)) / 4 + 7"
+  args <- getArgs
+  let results = map ((\x -> if isJust x then show (fromJust x) else "Parse error") . extract . calc . parse) args
+  mapM_ putStrLn results

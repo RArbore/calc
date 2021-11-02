@@ -10,6 +10,7 @@
     You should have received a copy of the GNU General Public License
     along with calc. If not, see <https://www.gnu.org/licenses/>.  -}
 
+import Data.Maybe
 import Data.Char
 
 data Operation = Add | Sub | Mul | Div | Exp deriving (Eq, Ord, Show)
@@ -21,9 +22,10 @@ parseNumberToken x
   | digits /= "" = Just (cutDigitHead x, TokenNumber $ read $ digits)
   | otherwise = Nothing
   where digits = takeWhile isDigit x
-        cutDigitHead (x:xs)
-          | isDigit(x) = cutDigitHead(xs)
-          | otherwise = x:xs
+        cutDigitHead [] = []
+        cutDigitHead (y:ys)
+          | isDigit(y) = cutDigitHead(ys)
+          | otherwise = y:ys
 
 parseOperationToken :: String -> Maybe (String, Token)
 parseOperationToken "" = Nothing
@@ -35,6 +37,15 @@ parseOperationToken (x:xs)
   | x == '^' = Just (xs, TokenOperation Exp)
   | otherwise = Nothing
 
+parse :: String -> [Token]
+parse "" = []
+parse (x:xs)
+  | isJust numRet = (snd (fromJust numRet)):(parse (fst (fromJust numRet)))
+  | isJust opRet = (snd (fromJust opRet)):(parse (fst (fromJust opRet)))
+  | otherwise = parse xs
+  where numRet = parseNumberToken (x:xs)
+        opRet = parseOperationToken (x:xs)
+
 main :: IO ()
 main = do
-  print $ parseOperationToken "+43 5 "
+  print $ parse "5 + 3+1   + *-"

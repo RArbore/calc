@@ -24,7 +24,7 @@ parseNumberToken x
   where digits = takeWhile isDigit x
         cutDigitHead [] = []
         cutDigitHead (y:ys)
-          | isDigit(y) = cutDigitHead(ys)
+          | isDigit(y) = cutDigitHead ys
           | otherwise = y:ys
 
 parseOperationToken :: String -> Maybe (String, Token)
@@ -42,10 +42,15 @@ parse "" = []
 parse (x:xs)
   | isJust numRet = (snd (fromJust numRet)):(parse (fst (fromJust numRet)))
   | isJust opRet = (snd (fromJust opRet)):(parse (fst (fromJust opRet)))
+  | x == '(' = Tokens (parse (takeWhile (\c -> c /= ')') xs)):(parse (cutInParens xs))
   | otherwise = parse xs
   where numRet = parseNumberToken (x:xs)
         opRet = parseOperationToken (x:xs)
+        cutInParens [] = []
+        cutInParens (y:ys)
+          | y == ')' = ys
+          | otherwise = cutInParens ys
 
 main :: IO ()
 main = do
-  print $ parse "5 + 3+1   + *-"
+  print $ parse "3 / (5 ^ (3 + 7))"
